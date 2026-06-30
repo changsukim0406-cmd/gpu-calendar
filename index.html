@@ -1,89 +1,38 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbw7bqTuP6ScCrHtxgmcYG6eqki7xGV_cTjUnUQQHu8a75k0_BQFBQBu1DmlfRdbPy5S/exec";
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>GPU Scheduler</title>
 
-let calendar;
-let events = [];
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
 
-const colorMap = {
-  "김창수": "#ef4444",
-  "서동주": "#3b82f6",
-  "차지민": "#10b981"
-};
+<div class="container">
+  <h1>GPU Scheduler</h1>
 
-document.addEventListener("DOMContentLoaded", async function () {
-  calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-    initialView: 'dayGridMonth',
-    headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek'
-    },
-    height: "auto",
-    events: []
-  });
+  <div class="form">
+    <select id="user">
+      <option>서동주</option>
+      <option>차지민</option>
+      <option>김창수</option>
+    </select>
 
-  calendar.render();
+    <select id="gpu">
+      <option>A6000</option>
+      <option>4090</option>
+    </select>
 
-  await loadData();
-  setInterval(loadData, 5000);
-});
+    <input type="datetime-local" id="start">
+    <input type="datetime-local" id="end">
 
-async function loadData() {
-  const res = await fetch(API_URL);
-  const data = await res.json();
+    <button onclick="addReservation()">예약</button>
+  </div>
 
-  events = data.map(r => ({
-    title: `${r.user} (${r.gpu})`,
-    start: r.start,
-    end: r.end,
-    backgroundColor: colorMap[r.user] || "#999"
-  }));
+  <div id="calendar"></div>
+</div>
 
-  calendar.removeAllEvents();
-  calendar.addEventSource(events);
-}
-
-function hasConflict(newEvent, data) {
-  const ns = new Date(newEvent.start).getTime();
-  const ne = new Date(newEvent.end).getTime();
-
-  return data.some(e => {
-    if (e.gpu !== newEvent.gpu) return false;
-
-    const es = new Date(e.start).getTime();
-    const ee = new Date(e.end).getTime();
-
-    return ns < ee && ne > es;
-  });
-}
-
-async function addReservation() {
-  const user = document.getElementById("user").value;
-  const gpu = document.getElementById("gpu").value;
-  const start = document.getElementById("start").value;
-  const end = document.getElementById("end").value;
-
-  if (!start || !end) {
-    alert("시간을 입력하세요.");
-    return;
-  }
-
-  const newEvent = { user, gpu, start, end };
-
-  const res = await fetch(API_URL);
-  const data = await res.json();
-
-  if (hasConflict(newEvent, data)) {
-    alert("❌ GPU 사용 시간이 겹칩니다.");
-    return;
-  }
-
-  await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify(newEvent)
-  });
-
-  await loadData();
-}
+<script src="./app.js"></script>
+</body>
+</html>

@@ -1,32 +1,32 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbySulYfYcP-iXmxINIZEqMTetncz7_BbYiH493HGUiy3IBwJP531bcvA7rNyi2ESmtf/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw7bqTuP6ScCrHtxgmcYG6eqki7xGV_cTjUnUQQHu8a75k0_BQFBQBu1DmlfRdbPy5S/exec";
 
 let calendar;
 let events = [];
 
-// 색상 매핑
 const colorMap = {
   "김창수": "#ef4444",
   "서동주": "#3b82f6",
-  "차지민": "#10b981",
-  "A6000": "#6366f1",
-  "4090": "#f97316"
+  "차지민": "#10b981"
 };
 
-// 초기 로딩
 document.addEventListener("DOMContentLoaded", async function () {
   calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-    initialView: 'timeGridWeek',
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek'
+    },
     height: "auto",
     events: []
   });
 
   calendar.render();
-  await loadData();
 
+  await loadData();
   setInterval(loadData, 5000);
 });
 
-// 데이터 로딩
 async function loadData() {
   const res = await fetch(API_URL);
   const data = await res.json();
@@ -35,15 +35,13 @@ async function loadData() {
     title: `${r.user} (${r.gpu})`,
     start: r.start,
     end: r.end,
-    backgroundColor: colorMap[r.user] || "#999",
-    borderColor: colorMap[r.gpu] || "#333"
+    backgroundColor: colorMap[r.user] || "#999"
   }));
 
   calendar.removeAllEvents();
   calendar.addEventSource(events);
 }
 
-// 충돌 체크
 function hasConflict(newEvent, data) {
   const ns = new Date(newEvent.start).getTime();
   const ne = new Date(newEvent.end).getTime();
@@ -58,7 +56,6 @@ function hasConflict(newEvent, data) {
   });
 }
 
-// 예약 추가
 async function addReservation() {
   const user = document.getElementById("user").value;
   const gpu = document.getElementById("gpu").value;
@@ -66,25 +63,27 @@ async function addReservation() {
   const end = document.getElementById("end").value;
 
   if (!start || !end) {
-    alert("시간 입력");
+    alert("시간을 입력하세요.");
     return;
   }
 
   const newEvent = { user, gpu, start, end };
 
-  // 최신 데이터 다시 가져와서 충돌 체크
   const res = await fetch(API_URL);
   const data = await res.json();
 
   if (hasConflict(newEvent, data)) {
-    alert("❌ GPU 시간 겹침 (예약 불가)");
+    alert("❌ GPU 사용 시간이 겹칩니다.");
     return;
   }
 
   await fetch(API_URL, {
     method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
     body: JSON.stringify(newEvent)
   });
 
-  loadData();
+  await loadData();
 }
