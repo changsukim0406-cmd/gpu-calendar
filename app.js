@@ -10,38 +10,42 @@ const colorMap = {
 };
 
 document.addEventListener("DOMContentLoaded", async function () {
-  calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-    initialView: 'dayGridMonth',
+  calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
+    initialView: "dayGridMonth",
 
     headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek'
+      left: "prev,next today",
+      center: "title",
+      right: "dayGridMonth,timeGridWeek"
     },
 
     eventClick: async function(info) {
       const id = info.event.id;
 
-      console.log("clicked event id:", id);
-
       if (!id) {
-        alert("삭제 실패: event id 없음 (loadData 확인 필요)");
+        alert("삭제 실패: event id 없음");
         return;
       }
 
       if (!confirm("삭제하시겠습니까?")) return;
 
       try {
-        const res = await fetch(`${API_URL}?action=delete&id=${id}`);
-        const text = await res.text();
-
-        console.log("delete response:", text);
-
+        await fetch(`${API_URL}?action=delete&id=${id}`);
         await loadData();
       } catch (err) {
         console.error("delete error:", err);
         alert("삭제 실패");
       }
+    },
+
+    eventDidMount: function(info) {
+      const start = info.event.start;
+      const end = info.event.end;
+
+      info.el.title =
+        `${info.event.title}\n` +
+        `Start: ${start}\n` +
+        `End: ${end}`;
     },
 
     height: "auto",
@@ -53,6 +57,18 @@ document.addEventListener("DOMContentLoaded", async function () {
   await loadData();
   setInterval(loadData, 5000);
 });
+
+function formatTime(datetimeStr) {
+  const d = new Date(datetimeStr);
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
+function formatDate(datetimeStr) {
+  const d = new Date(datetimeStr);
+  return `${d.getMonth() + 1}/${d.getDate()} ${formatTime(datetimeStr)}`;
+}
 
 function formatEventTitle(r) {
   const start = new Date(r.start);
@@ -68,32 +84,24 @@ function formatEventTitle(r) {
   return `${formatDate(r.start)} ~ ${formatDate(r.end)} | ${r.user} (${r.gpu})`;
 }
 
-function formatDate(datetimeStr) {
-  const d = new Date(datetimeStr);
-  return `${d.getMonth()+1}/${d.getDate()} ${formatTime(datetimeStr)}`;
-}
-
-function formatTime(datetimeStr) {
-  const d = new Date(datetimeStr);
-  const h = String(d.getHours()).padStart(2, "0");
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
-}
-
 async function loadData() {
-  const res = await fetch(API_URL);
-  const data = await res.json();
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
 
-  events = data.map(r => ({
-    id: r.id,
-    title: formatEventTitle(r),
-    start: r.start,
-    end: r.end,
-    backgroundColor: colorMap[r.user] || "#999"
-  }));
+    events = data.map(r => ({
+      id: r.id,
+      title: formatEventTitle(r),
+      start: r.start,
+      end: r.end,
+      backgroundColor: colorMap[r.user] || "#999"
+    }));
 
-  calendar.removeAllEvents();
-  calendar.addEventSource(events);
+    calendar.removeAllEvents();
+    calendar.addEventSource(events);
+  } catch (err) {
+    console.error("loadData error:", err);
+  }
 }
 
 function hasConflict(newEvent, data) {
@@ -122,28 +130,35 @@ async function addReservation() {
     return;
   }
 
-  const newEvent = { id, user, gpu, start, end };
-
-  // 기존 예약 불러오기
-  const res = await fetch(API_URL);
-  const data = await res.json();
-
-  // 충돌 검사
-  if (hasConflict(newEvent, data)) {
-    alert("❌ GPU 사용 시간이 겹칩니다.");
+  if (new Date(end) <= new Date(start)) {
+    alert("종료 시간은 시작 시간보다 늦어야 합니다.");
     return;
   }
 
-  // 예약 추가
-  const url =
-    `${API_URL}?action=add` +
-    `&id=${id}` +
-    `&user=${encodeURIComponent(user)}` +
-    `&gpu=${encodeURIComponent(gpu)}` +
-    `&start=${encodeURIComponent(start)}` +
-    `&end=${encodeURIComponent(end)}`;
+  const newEvent = { id, user, gpu, start, end };
 
-  await fetch(url);
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
 
-  await loadData();
+    if (hasConflict(newEvent, data)) {
+      alert("❌ GPU 사용 시간이 겹칩니다.");
+      return;
+    }
+
+    const url =
+      `${API_URL}?action=add` +
+      `&id=${id}` +
+      `&user=${encodeURIComponent(user)}` +
+      `&gpu=${encodeURIComponent(gpu)}` +
+      `&start=${encodeURIComponent(start)}` +
+      `&end=${encodeURIComponent(end)}`;
+
+    await fetch(url);
+    await loadData();
+
+  } catch (err) {
+    console.error("addReservation error:", err);
+    alert("예약 실패");
+  }
 }
