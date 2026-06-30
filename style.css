@@ -6,7 +6,7 @@ body {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: auto;
   background: white;
   padding: 20px;
@@ -42,4 +42,27 @@ button:hover {
 
 #calendar {
   margin-top: 20px;
+}
+
+/* FullCalendar override */
+.fc-daygrid-day-frame {
+  min-height: 140px !important;
+}
+
+.fc-daygrid-event {
+  white-space: normal !important;
+}
+
+.fc-event-main {
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+.fc-event-title {
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+.fc-h-event {
+  height: auto !important;
 }

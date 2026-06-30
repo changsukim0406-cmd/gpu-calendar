@@ -19,11 +19,19 @@ document.addEventListener("DOMContentLoaded", async function () {
       right: "dayGridMonth,timeGridWeek"
     },
 
+    displayEventTime: false,
+
+    eventContent: function(arg) {
+      return {
+        html: `<div style="white-space: normal; line-height:1.2; font-size:11px;">${arg.event.title}</div>`
+      };
+    },
+
     eventClick: async function(info) {
       const id = info.event.id;
 
       if (!id) {
-        alert("삭제 실패: event id 없음");
+        alert("삭제 실패");
         return;
       }
 
@@ -33,22 +41,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         await fetch(`${API_URL}?action=delete&id=${id}`);
         await loadData();
       } catch (err) {
-        console.error("delete error:", err);
-        alert("삭제 실패");
+        console.error(err);
       }
     },
 
-    eventDidMount: function(info) {
-      const start = info.event.start;
-      const end = info.event.end;
-
-      info.el.title =
-        `${info.event.title}\n` +
-        `Start: ${start}\n` +
-        `End: ${end}`;
-    },
-
     height: "auto",
+    dayMaxEventRows: false,
     events: []
   });
 
@@ -60,9 +58,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 function formatTime(datetimeStr) {
   const d = new Date(datetimeStr);
-  const h = String(d.getHours()).padStart(2, "0");
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 function formatDate(datetimeStr) {
@@ -74,10 +70,7 @@ function formatEventTitle(r) {
   const start = new Date(r.start);
   const end = new Date(r.end);
 
-  const sameDay =
-    start.toDateString() === end.toDateString();
-
-  if (sameDay) {
+  if (start.toDateString() === end.toDateString()) {
     return `${formatTime(r.start)}-${formatTime(r.end)} | ${r.user} (${r.gpu})`;
   }
 
@@ -100,7 +93,7 @@ async function loadData() {
     calendar.removeAllEvents();
     calendar.addEventSource(events);
   } catch (err) {
-    console.error("loadData error:", err);
+    console.error(err);
   }
 }
 
@@ -142,7 +135,7 @@ async function addReservation() {
     const data = await res.json();
 
     if (hasConflict(newEvent, data)) {
-      alert("❌ GPU 사용 시간이 겹칩니다.");
+      alert("GPU 사용 시간이 겹칩니다.");
       return;
     }
 
@@ -156,9 +149,7 @@ async function addReservation() {
 
     await fetch(url);
     await loadData();
-
   } catch (err) {
-    console.error("addReservation error:", err);
-    alert("예약 실패");
+    console.error(err);
   }
 }
