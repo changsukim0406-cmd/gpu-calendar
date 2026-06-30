@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbw7bqTuP6ScCrHtxgmcYG6eqki7xGV_cTjUnUQQHu8a75k0_BQFBQBu1DmlfRdbPy5S/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyDqTIHhedNmBb7KH7GtoIzbqX5g08OQzswyK1ahmb-0rnwywdz3mT-Vrh0zHZC1Pr5/exec";
 
 let calendar;
 let events = [];
@@ -77,13 +77,14 @@ async function addReservation() {
     return;
   }
 
-  await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify(newEvent)
-  });
+    const url =
+    `${API_URL}?action=add` +
+    `&user=${encodeURIComponent(user)}` +
+    `&gpu=${encodeURIComponent(gpu)}` +
+    `&start=${encodeURIComponent(start)}` +
+    `&end=${encodeURIComponent(end)}`;
+
+    await fetch(url);
 
   await loadData();
 }
