@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>GPU Scheduler</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <h1>GPU Scheduler</h1>
+
+  <div class="form">
+    <select id="user">
+      <option>서동주</option>
+      <option>차지민</option>
+      <option>김창수</option>
+    </select>
+
+    <select id="gpu">
+      <option>A6000</option>
+      <option>4090</option>
+    </select>
+
+    <input type="datetime-local" id="start">
+    <input type="datetime-local" id="end">
+
+    <button onclick="addReservation()">예약</button>
+  </div>
+
+  <div id="calendar"></div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
