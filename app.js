@@ -54,13 +54,39 @@ document.addEventListener("DOMContentLoaded", async function () {
   setInterval(loadData, 5000);
 });
 
+function formatEventTitle(r) {
+  const start = new Date(r.start);
+  const end = new Date(r.end);
+
+  const sameDay =
+    start.toDateString() === end.toDateString();
+
+  if (sameDay) {
+    return `${formatTime(r.start)}-${formatTime(r.end)} | ${r.user} (${r.gpu})`;
+  }
+
+  return `${formatDate(r.start)} ~ ${formatDate(r.end)} | ${r.user} (${r.gpu})`;
+}
+
+function formatDate(datetimeStr) {
+  const d = new Date(datetimeStr);
+  return `${d.getMonth()+1}/${d.getDate()} ${formatTime(datetimeStr)}`;
+}
+
+function formatTime(datetimeStr) {
+  const d = new Date(datetimeStr);
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
 async function loadData() {
   const res = await fetch(API_URL);
   const data = await res.json();
 
   events = data.map(r => ({
     id: r.id,
-    title: `${r.user} (${r.gpu})`,
+    title: formatEventTitle(r),
     start: r.start,
     end: r.end,
     backgroundColor: colorMap[r.user] || "#999"
